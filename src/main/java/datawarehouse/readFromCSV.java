@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class readFromCSV {
-	public void readFileCsv(String csv_file,String table_name,String table_schema) {
+	//ConnectToPostgres connect = new ConnectToPostgres(GUserInterface.URL, GUserInterface.USER, GUserInterface.PASSWORD);
+
+	public void readFileCsv(ConnectToPostgres connect,String csv_file,String table_name,String table_schema) {
 		//connecte to data base postgres
-		ConnectToPostgres connect = new ConnectToPostgres(GUserInterface.URL, GUserInterface.USER, GUserInterface.PASSWORD);
-		if (connect.ConnecttoDataBase()!= null) {
+				if (connect.ConnecttoDataBase()!= null) {
 			
 			
 			
@@ -32,7 +33,7 @@ public class readFromCSV {
 			}
 			
 			try {
-				connect.sendUpdate("DROP TABLE IF EXISTS  public."+table_name);
+				connect.sendUpdate("DROP TABLE IF EXISTS  public."+table_name+" CASCADE;");
 				connect.sendUpdate("CREATE TABLE IF NOT EXISTS public." + table_name + " (" + table_schema + ");");
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
@@ -49,30 +50,42 @@ public class readFromCSV {
 				// Lecture du fichier CSV ligne par ligne
 				
 				while ((line = br.readLine()) != null) {
+					
+					
+					while(line.contains(",,")) {
+						line =line.toString().replace(",,", ",null,");
+					}	
+					
+					
+					if(line.toString().endsWith(",")) {line =line.toString()+"null";}
+					
+					
 					String query;
 					String value="";
-					String[] values=line.split(",");
+					String[] values=line.toString().split(",");
 					for (String v : values) {
+						
 						//reccupére le premier caractre de l'attribue
 						char first_cara = v.charAt(0);
 						//voir si le premier caractre est nombre ou non
 						if(nombres.indexOf(first_cara)!= -1) {
 							if(v.contains("/")){
 								//si l'attribue est un date
-								value += "\'"+v+"\',";
+								value += v.replace("\"", "\'")+",";
 							}else {
 								//si l'attribue est un chiffire
 								value += v+",";
 							}
 						}else {
 							//si l'attribue est chaine de caractre
-							value += "'"+v+"',";
+							
+							if (v.contentEquals("null")) { value += v+",";}
+							else {value += v.replace("\"", "\'")+",";}
 						}
 						
 					}
 					
-					System.out.println("attribute "+attributes.substring(0, attributes.length()-1)+" value"
-							+ " "+value.substring(0,value.length()-1));
+					
 					
 					// RÃ©cupÃ©rer les valeurs des attributs prÃ©sentes 
 					// dans "line" et construire une requÃªte "INSERT" 
@@ -95,5 +108,9 @@ public class readFromCSV {
 			}
 		}
 		
+	}
+	
+	public void updatetable(ConnectToPostgres connect,String query) throws SQLException {
+		connect.sendUpdate(query);
 	}
 }

@@ -4,8 +4,10 @@ import java.util.Hashtable;
 
 public class createTables {
 	static public Hashtable<String, String> tables = null;
+	static public Hashtable<String, String> update = null;
 	public createTables() {
 		tables = new Hashtable<String, String>();
+		update = new Hashtable<String, String>();
 		tables.put("account", "account_id int not null primary key,"
 				+ "district_id int,"
 				+ "frequency varchar(20),"
@@ -15,18 +17,18 @@ public class createTables {
 				+ "brith_date date,"
 				+ "district_id int");
 		tables.put("district","district_id int not null primary key,"
-				+ "A2 int,"
-				+ "A3 int,"
+				+ "A2 varchar(20),"
+				+ "A3 varchar(20),"
 				+ "A4 int,"
 				+ "A5 int,"
 				+ "A6 int,"
 				+ "A7 int,"
 				+ "A8 int,"
 				+ "A9 int,"
-				+ "A10 int,"
+				+ "A10 decimal,"
 				+ "A11 int,"
-				+ "A12 int,"
-				+ "A13 int,"
+				+ "A12 decimal,"
+				+ "A13 decimal,"
 				+ "A14 int,"
 				+ "A15 int,"
 				+ "A16 int");
@@ -57,11 +59,21 @@ public class createTables {
 				+ "amount int ,"
 				+ "duration int ,"
 				+ "payments decimal,"
-				+ "status varchar");
+				+ "status varchar(10)");
 		tables.put("card", "card_id int not null primary key,"
 				+ "disp_id int ,"
 				+ "type varchar(10),"
 				+ "issued date");
+		//////////////////////////////////////////les mis à jour des tables
+		update.put("updateClient", "ALTER TABLE client ADD FOREIGN KEY (district_id) REFERENCES district(district_id);");
+		update.put("updateAccount", "ALTER TABLE account ADD FOREIGN KEY (district_id) REFERENCES district(district_id);");
+		update.put("updateCard", "ALTER TABLE card ADD FOREIGN KEY (disp_id) REFERENCES disp(disp_id);");
+		update.put("updateDisp", "ALTER TABLE disp ADD FOREIGN KEY (client_id) REFERENCES client(client_id);"
+				+ "ALTER TABLE disp ADD FOREIGN KEY (account_id) REFERENCES account(account_id);");
+		update.put("updateTrans",  "ALTER TABLE trans ADD FOREIGN KEY (account_id) REFERENCES account(account_id);");
+		update.put("updateLoan", "ALTER TABLE loan ADD FOREIGN KEY (account_id) REFERENCES account(account_id);");
+		update.put("updateLoan", "ALTER TABLE \"order\" ADD FOREIGN KEY (account_id) REFERENCES account(account_id);");
+		
 		
 	}
 	

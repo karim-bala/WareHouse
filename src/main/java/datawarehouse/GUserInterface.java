@@ -12,6 +12,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.awt.event.ActionEvent;
@@ -20,6 +21,10 @@ import javax.swing.JLabel;
 public class GUserInterface extends JFrame {
 
 	public static String URL="";
+	public static String USER="";
+	public static String PASSWORD="";
+	public ConnectToPostgres connect =null; 
+	
 	public static String getURL() {
 		return URL;
 	}
@@ -44,8 +49,7 @@ public class GUserInterface extends JFrame {
 		PASSWORD = pASSWORD;
 	}
 
-	public static String USER="";
-	public static String PASSWORD="";
+	
 	
 	private JPanel contentPane;
 	private JTextField textField;
@@ -73,6 +77,7 @@ public class GUserInterface extends JFrame {
 	 * Create the frame.
 	 */
 	public GUserInterface() {
+		setTitle("DataWareHouse");
 		final Hashtable<String, String> pathTable = new Hashtable<String, String>();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
@@ -146,6 +151,7 @@ public class GUserInterface extends JFrame {
 					readFromCSV read_files = new readFromCSV();
 					createTables TABLES =new createTables();
 					String key="";
+					int i =0;
 					Enumeration<String> names = pathTable.keys();
 					
 					   while(names.hasMoreElements()) {
@@ -154,13 +160,35 @@ public class GUserInterface extends JFrame {
 					     
 					      
 					      if (TABLES.tables.containsKey(key) == true) {
-					      read_files.readFileCsv(pathTable.get(key), key, TABLES.tables.get(key));
+					      read_files.readFileCsv(connect,pathTable.get(key), key, TABLES.tables.get(key));
 					      }else {
 					    	  JOptionPane.showMessageDialog(contentPane, ""
 					    	  		+ "table name not exist !", "ERROR", JOptionPane.ERROR_MESSAGE);
-								  
+								  i = i+1;
 					      }
 					      
+					   }
+					   if(i != 0) {
+						   JOptionPane.showMessageDialog(contentPane, ""
+					    	  		+ "table name not exist !", "ERROR", JOptionPane.ERROR_MESSAGE);
+								  
+					   }else {
+						   names = TABLES.update.keys();
+						   boolean err = true;
+						   while(names.hasMoreElements()) {
+							      key = names.nextElement();
+							      try {
+									read_files.updatetable(connect,TABLES.update.get(key));
+								} catch (SQLException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+									err = false;
+								}
+						  }
+						  if(err) {
+							  JOptionPane.showMessageDialog(contentPane, ""
+									+ "base des donnees est bien creer", "OK", JOptionPane.INFORMATION_MESSAGE);
+							 } 
 					   }
 				}
 			}
@@ -171,6 +199,40 @@ public class GUserInterface extends JFrame {
 		JButton btnNewButton_2 = new JButton("create data warehouse");
 		btnNewButton_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				
+				try {
+				//le processus ETL
+				try {
+					connect.sendUpdate("drop schema if  exists stock cascade;");
+					connect.sendUpdate("create schema if not exists stock;");
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				ETLprocessus etl = new ETLprocessus();
+				// extraction and trosformation
+				etl.ExtractAndTronsform(connect);
+				
+				// loading 
+				try {
+					connect.sendUpdate("drop schema if exists dwh cascade;");
+					connect.sendUpdate("create schema if not exists dwh;");
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				etl.Load(connect);
+				JOptionPane.showMessageDialog(contentPane, ""
+						+ "etropot de donnees est bien creer", "OK", JOptionPane.INFORMATION_MESSAGE);
+				
+				}catch (Exception e1) {
+					// TODO: handle exception
+				}
+				
+				
+				
+				
 			}
 		});
 		btnNewButton_2.setBounds(237, 192, 145, 23);
@@ -183,10 +245,13 @@ public class GUserInterface extends JFrame {
 				USER = textField_2.getText().toString();
 				PASSWORD = textField_3.getText().toString();
 				
-				ConnectToPostgres c = new ConnectToPostgres(URL,USER,PASSWORD);
-				if(c.ConnecttoDataBase()!= null) {
+				connect= new ConnectToPostgres(URL,USER,PASSWORD);
+				if(connect.ConnecttoDataBase()!= null) {
 					JOptionPane.showMessageDialog(contentPane, "Connected to the database!", "Alert", JOptionPane.INFORMATION_MESSAGE);
 
+				}else {
+					JOptionPane.showMessageDialog(contentPane, ""
+							+ "erreur de connection au serveur postgres", "OK", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});

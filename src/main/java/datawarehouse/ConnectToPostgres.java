@@ -24,11 +24,7 @@ public class ConnectToPostgres {
 			
 			connexion = DriverManager.getConnection(url, utilisateur, motDePasse);
 			
-			if (connexion != null) {
-	            System.out.println("Connected to the database!");
-	             } else {
-	            System.out.println("Failed to make connection!");
-	             }
+			
 			
 		} catch (Exception e) {
 			// TODO: handle exception
